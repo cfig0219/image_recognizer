@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planet Classifier</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-data@4.10.0"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Planet or Not?</h1>
+    <div class="container">
+        <h2>1. Upload Training Data</h2>
+        <input type="file" id="train-folder" webkitdirectory directory multiple>
+        <button id="train-button">Train Model</button>
+    </div>
+
+    <div class="container">
+        <h2>2. Select an Image to Predict</h2>
+        <input type="file" id="predict-image" accept="image/*">
+        <button id="predict-button">Predict</button>
+        <p id="prediction-result"></p>
+    </div>
+
+    <script>
+        let model; // Initializes tensor flow training model
+        const trainButton = document.getElementById('train-button');
+        const predictButton = document.getElementById('predict-button');
+        const predictionResult = document.getElementById('prediction-result');
+        
+        // function to select image file
+        async function preprocessImage(file) {
+            const imageBitmap = await createImageBitmap(file);
+            const tensor = tf.browser.fromPixels(imageBitmap)
+                .resizeNearestNeighbor([128, 128]) // Resize to 128x128
+                .toFloat()
+                .div(tf.scalar(255.0)) // Normalize
+                .expandDims();
+            return tensor;
+        }
+
+        // Function to upload training data
+        async function loadTrainingData(files) {
+            const xs = [];
+            const ys = [];
+        
+            for (const file of files) {
+                // Check if the file is an image
+                if (!file.type.startsWith('image/')) {
+                    console.log('Skipping non-image file:', file.name);
+                    continue;
+                }
+        
+                console.log('Processing file:', file.webkitRelativePath);
+        
+                if (file.webkitRelativePath.includes('/planet/')) {
+                    xs.push(await preprocessImage(file));
+                    ys.push([1, 0]); // Label for "planet"
+                } else if (file.webkitRelativePath.includes('/not_planet/')) {
+                    xs.push(await preprocessImage(file));
+                    ys.push([0, 1]); // Label for "not planet"
+                }
+            }
+        
+            if (xs.length === 0 || ys.length === 0) {
+                alert('No valid training data found. Please ensure your folders contain images in "planet" and "not_planet" subfolders.');
+                return null;
+            }
+        
+            return {
+                xs: tf.concat(xs),
+                ys: tf.tensor2d(ys),
+            };
+        }
+        
+        // Function to train the tensor flow model
+        async function trainModel(files) {
+            // Load the training data
+            const data = await loadTrainingData(files);
+            if (!data) {
+                console.error('Training data could not be loaded.');
+                return;
+            }
+        
+            const { xs, ys } = data; // Destructure training data
+        
+            // Define the model
+            const model = tf.sequential();
+            model.add(tf.layers.conv2d({
+                inputShape: [128, 128, 3], // Input image size (128x128 RGB)
+                filters: 16,
+                kernelSize: 3,
+                activation: 'relu',
+            }));
+            model.add(tf.layers.maxPooling2d({ poolSize: 2 }));
+            model.add(tf.layers.flatten());
+            model.add(tf.layers.dense({ units: 64, activation: 'relu' }));
+            model.add(tf.layers.dense({ units: 2, activation: 'softmax' })); // 2 classes: planet and not planet
+        
+            // Compile the model
+            model.compile({
+                optimizer: 'adam',
+                loss: 'categoricalCrossentropy',
+                metrics: ['accuracy'],
+            });
+        
+            // Train the model
+            console.log('Starting training...');
+            await model.fit(xs, ys, {
+                epochs: 5,
+                batchSize: 8,
+                callbacks: {
+                    onEpochEnd: (epoch, logs) => console.log(`Epoch ${epoch + 1}: loss=${logs.loss}, accuracy=${logs.acc}`),
+                },
+            });
+            console.log('Training complete.');
+        
+            // Clean up tensors to prevent memory leaks
+            xs.dispose();
+            ys.dispose();
+        
+            // Save the model globally for later use
+            window.model = model; // Allows the model to be used in the predict function
+        }
+
+        
+        // Button to select image to determine if planet or not
+        async function predictImage(file) {
+            if (!window.model) {
+                alert('Model is not trained. Please train the model first.');
+                return;
+            }
+        
+            const tensor = await preprocessImage(file);
+            console.log('Tensor shape:', tensor.shape); // Debugging tensor
+        
+            try {
+                const prediction = window.model.predict(tensor); // Ensure model is trained
+                const predictionArray = prediction.dataSync();
+        
+                tensor.dispose();
+                prediction.dispose();
+        
+                predictionResult.textContent = predictionArray[0] > predictionArray[1] ? 'Planet' : 'Not Planet';
+            } catch (error) {
+                console.error('Prediction error:', error);
+                alert('Error during prediction. Please check the input and model.');
+            }
+        }
+
+
+        // Button to upload files to train model
+        trainButton.addEventListener('click', async () => {
+            const files = document.getElementById('train-folder').files;
+        
+            // Log the uploaded files
+            console.log('Uploaded files:');
+            for (const file of files) {
+                console.log(file.name, file.webkitRelativePath, file.type);
+            }
+        
+            if (files.length === 0) {
+                alert('Please upload training data.');
+                return;
+            }
+            await trainModel(files);
+        });
+
+        predictButton.addEventListener('click', async () => {
+            const file = document.getElementById('predict-image').files[0];
+            if (!file) {
+                alert('Please select an image to predict.');
+                return;
+            }
+            await predictImage(file);
+        });
+    </script>
+</body>
+</html>
