@@ -3,9 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
     <title>Image Classifier</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-data@4.10.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js"></script>
+    
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         .container { margin-bottom: 20px; }
@@ -59,11 +62,8 @@
             for (const file of files) {
                 // Check if the file is an image
                 if (!file.type.startsWith('image/')) {
-                    console.log('Skipping non-image file:', file.name);
                     continue;
                 }
-        
-                console.log('Processing file:', file.webkitRelativePath);
         
                 if (file.webkitRelativePath.includes('/match/')) {
                     xs.push(await preprocessImage(file));
@@ -90,7 +90,6 @@
             // Load the training data
             const data = await loadTrainingData(files);
             if (!data) {
-                console.error('Training data could not be loaded.');
                 trainingStatus.textContent = 'Training data could not be loaded.';
                 return;
             }
@@ -118,7 +117,6 @@
             });
         
             // Train the model
-            console.log('Starting training...');
             trainingStatus.textContent = 'Starting training...';
             await model.fit(xs, ys, {
                 epochs: 5,
@@ -127,7 +125,6 @@
                     onEpochEnd: (epoch, logs) => console.log(`Epoch ${epoch + 1}: loss=${logs.loss}, accuracy=${logs.acc}`),
                 },
             });
-            console.log('Training complete.');
             trainingStatus.textContent = 'Training complete.';
         
             // Clean up tensors to prevent memory leaks
@@ -147,7 +144,6 @@
             }
         
             const tensor = await preprocessImage(file); // Waits for call of preprocessedImage function
-            console.log('Tensor shape:', tensor.shape); // Debugging tensor
         
             try {
                 const prediction = window.model.predict(tensor); // Ensure model is trained
@@ -163,7 +159,6 @@
                 reader.extractImage(file);
                 
             } catch (error) {
-                console.error('Prediction error:', error);
                 alert('Error during prediction. Please check the input and model.');
             }
         }
