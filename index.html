@@ -12,7 +12,7 @@
     </style>
 </head>
 <body>
-    <h1>Planet or Not?</h1>
+    <h1>Receipt or Not?</h1>
     <div class="container">
         <h2>1. Upload Training Data</h2>
         <input type="file" id="train-folder" webkitdirectory directory multiple>
@@ -60,10 +60,10 @@
         
                 console.log('Processing file:', file.webkitRelativePath);
         
-                if (file.webkitRelativePath.includes('/planet/')) {
+                if (file.webkitRelativePath.includes('/match/')) {
                     xs.push(await preprocessImage(file));
                     ys.push([1, 0]); // Label for "planet"
-                } else if (file.webkitRelativePath.includes('/not_planet/')) {
+                } else if (file.webkitRelativePath.includes('/not_match/')) {
                     xs.push(await preprocessImage(file));
                     ys.push([0, 1]); // Label for "not planet"
                 }
@@ -152,7 +152,7 @@
                 prediction.dispose();
         
                 // Determines the text in the textContext paragraph
-                predictionResult.textContent = predictionArray[0] > predictionArray[1] ? 'Planet' : 'Not Planet';
+                predictionResult.textContent = predictionArray[0] > predictionArray[1] ? 'Category' : 'Not in Category';
             } catch (error) {
                 console.error('Prediction error:', error);
                 alert('Error during prediction. Please check the input and model.');
