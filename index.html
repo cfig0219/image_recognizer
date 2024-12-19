@@ -27,8 +27,13 @@
         <p id="prediction-result"></p>
     </div>
 
-    <script>
+    <script type="module"> // Script set to "module" type to allow for imports
+        // Imports functions from other file classes
+        import { Extractor } from './textExtractor.js';
+        
+        const reader = new Extractor(); // Initializes variable for image extractor
         let model; // Initializes tensor flow training model
+        
         const trainButton = document.getElementById('train-button');
         const predictButton = document.getElementById('predict-button');
         // Initializes result and status paragraphs
@@ -141,7 +146,7 @@
                 return;
             }
         
-            const tensor = await preprocessImage(file);
+            const tensor = await preprocessImage(file); // Waits for call of preprocessedImage function
             console.log('Tensor shape:', tensor.shape); // Debugging tensor
         
             try {
@@ -153,6 +158,10 @@
         
                 // Determines the text in the textContext paragraph
                 predictionResult.textContent = predictionArray[0] > predictionArray[1] ? 'Category' : 'Not in Category';
+                
+                // Calls image extraction function in image reader variable
+                reader.extractImage(file);
+                
             } catch (error) {
                 console.error('Prediction error:', error);
                 alert('Error during prediction. Please check the input and model.');
