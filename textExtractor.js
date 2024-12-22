@@ -4,29 +4,29 @@ export class Extractor {
      */
     constructor() {
         // Variable to store extracted text
-        this.imageText = "";
+        this.imageText = '';
     }
     
-    // Extracts the text from input image
+    // Extracts the text from input image and returns a Promise
     extractImage(image) {
-		// Extracts the text from the input file
-		Tesseract.recognize(
+        return Tesseract.recognize(
             image, // Example image URL
             'eng',
             {
-                //logger: (info) => console.log('Progress:', info), // Optional logger
+                // logger: (info) => console.log('Progress:', info), // Optional logger
             }
         )
-        
         .then(({ data: { text } }) => {
-            // sets image text equal to extracted text
+            // Sets image text equal to extracted text
             this.imageText = text;
-            console.log('Extracted text:', this.imageText);
         })
-        
-        // Error message if no text is found
         .catch((err) => {
-            console.error('Error during test:', err);
+            throw err; // Rethrow the error to propagate it to the caller
         });
+    }
+    
+    // Gets extracted text string
+    getText() {
+        return this.imageText;
     }
 }

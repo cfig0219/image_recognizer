@@ -18,6 +18,8 @@
     <h1>Receipt or Not?</h1>
     <div class="container">
         <h2>1. Upload Training Data</h2>
+        <p>Select a folder with subfolders titled "match" and "not_match".</p>
+        <p>Place examples of receipts in "match" folder, everything else in "not_match."</p>
         <input type="file" id="train-folder" webkitdirectory directory multiple>
         <button id="train-button">Train Model</button>
         <p id="training-status"></p>
@@ -28,6 +30,11 @@
         <input type="file" id="predict-image" accept="image/*">
         <button id="predict-button">Predict</button>
         <p id="prediction-result"></p>
+    </div>
+    
+    <div class="container">
+        <h2>3. Output of Selected Image</h2>
+        <p id="image-output"></p>
     </div>
 
     <script type="module"> // Script set to "module" type to allow for imports
@@ -42,6 +49,7 @@
         // Initializes result and status paragraphs
         const predictionResult = document.getElementById('prediction-result');
         const trainingStatus = document.getElementById('training-status');
+        const imageOutput = document.getElementById('image-output');
         
         // function to select image file
         async function preprocessImage(file) {
@@ -155,11 +163,15 @@
                 // Determines the text in the textContext paragraph
                 predictionResult.textContent = predictionArray[0] > predictionArray[1] ? 'Category' : 'Not in Category';
                 
-                // Calls image extraction function in image reader variable
-                reader.extractImage(file);
+                // Displays image output string as paragraph content
+                reader.extractImage(file).then(() => {
+                    imageOutput.textContent = reader.getText(); // Output extracted text after it is ready
+                });
+                
                 
             } catch (error) {
                 alert('Error during prediction. Please check the input and model.');
+                predictionResult.textContent = 'Refresh page to fix error';
             }
         }
 
