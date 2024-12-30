@@ -165,7 +165,7 @@
                 
                 // Displays image output string as paragraph content
                 reader.extractImage(file).then(() => {
-                    imageOutput.textContent = reader.getText(); // Output extracted text after it is ready
+                    imageOutput.innerHTML = reader.getText().replace(/\n/g, '<br>'); // Replace \n with <br> for HTML rendering
                 });
                 
                 

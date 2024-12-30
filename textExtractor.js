@@ -3,30 +3,32 @@ export class Extractor {
      * Initializes the text Extractor class
      */
     constructor() {
-        // Variable to store extracted text
+        // Variable to store extracted text with newline separation
         this.imageText = '';
     }
     
     // Extracts the text from input image and returns a Promise
     extractImage(image) {
         return Tesseract.recognize(
-            image, // Example image URL
+            image, // Input image
             'eng',
             {
                 // logger: (info) => console.log('Progress:', info), // Optional logger
             }
         )
         .then(({ data: { text } }) => {
-            // Sets image text equal to extracted text
-            this.imageText = text;
+            // Add '\n' after each line and save as a single string
+            this.imageText = text.split('\n').map(line => line.trim() + '\n').join('');
         })
         .catch((err) => {
-            throw err; // Rethrow the error to propagate it to the caller
+            console.error('Error during extraction:', err);
+            throw err;
         });
     }
     
-    // Gets extracted text string
+    // Gets the extracted text with newlines
     getText() {
+        console.log(this.imageText);
         return this.imageText;
     }
 }
