@@ -8,6 +8,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-data@4.10.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdf-lib/dist/pdf-lib.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist/build/pdf.min.js"></script>
     
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
@@ -142,7 +144,24 @@
             // Save the model globally for later use
             window.model = model; // Allows the model to be used in the predict function
         }
-
+        
+        
+        async function extractTextFromPDF(file) {
+            const pdfjsLib = window['pdfjs-dist/build/pdf'];
+            const pdfBytes = await file.arrayBuffer();
+            const pdfDocument = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
+        
+            let extractedText = '';
+            for (let i = 1; i <= pdfDocument.numPages; i++) {
+                const page = await pdfDocument.getPage(i);
+                const textContent = await page.getTextContent();
+        
+                // Concatenate text items
+                extractedText += textContent.items.map(item => item.str).join(' ') + '\n';
+            }
+        
+            return extractedText;
+        }
         
         // Button to select image to determine if planet or not
         async function predictImage(file) {
@@ -151,27 +170,40 @@
                 return;
             }
         
-            const tensor = await preprocessImage(file); // Waits for call of preprocessedImage function
-        
             try {
-                const prediction = window.model.predict(tensor); // Ensure model is trained
-                const predictionArray = prediction.dataSync();
+                if (file.type === 'application/pdf') {
+                    // Handle text-based PDFs
+                    const extractedText = await extractTextFromPDF(file);
+                    
+                    if (!extractedText.trim()) {
+                        alert('No text found in this PDF.');
+                        return;
+                    }
+                    
+                    predictionResult.textContent = extractedText.replace(/\n/g, '<br>'); // Display extracted text
         
-                tensor.dispose();
-                prediction.dispose();
+                } else if (file.type.startsWith('image/')) {
+                    // Handle image files
+                    const tensor = await preprocessImage(file);
+                    const prediction = window.model.predict(tensor);
+                    const predictionArray = prediction.dataSync();
         
-                // Determines the text in the textContext paragraph
-                predictionResult.textContent = predictionArray[0] > predictionArray[1] ? 'Category' : 'Not in Category';
-                
-                // Displays image output string as paragraph content
-                reader.extractImage(file).then(() => {
-                    imageOutput.innerHTML = reader.getText().replace(/\n/g, '<br>'); // Replace \n with <br> for HTML rendering
-                });
-                
-                
+                    tensor.dispose();
+                    prediction.dispose();
+        
+                    predictionResult.textContent = predictionArray[0] > predictionArray[1] ? 'Category' : 'Not in Category';
+                    
+                    // Displays image output string as paragraph content
+                    reader.extractImage(file).then(() => {
+                        imageOutput.innerHTML = reader.getText().replace(/\n/g, '<br>'); // Replace \n with <br> for HTML rendering
+                    });
+                    
+                } else {
+                    alert('Unsupported file type. Please upload an image or a PDF.');
+                }
             } catch (error) {
-                alert('Error during prediction. Please check the input and model.');
-                predictionResult.textContent = 'Refresh page to fix error';
+                console.error('Error processing file:', error);
+                alert('An error occurred while processing the file. Please check the file and try again.');
             }
         }
 
