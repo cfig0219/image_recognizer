@@ -146,23 +146,6 @@
         }
         
         
-        async function extractTextFromPDF(file) {
-            const pdfjsLib = window['pdfjs-dist/build/pdf'];
-            const pdfBytes = await file.arrayBuffer();
-            const pdfDocument = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
-        
-            let extractedText = '';
-            for (let i = 1; i <= pdfDocument.numPages; i++) {
-                const page = await pdfDocument.getPage(i);
-                const textContent = await page.getTextContent();
-        
-                // Concatenate text items
-                extractedText += textContent.items.map(item => item.str).join(' ') + '\n';
-            }
-        
-            return extractedText;
-        }
-        
         // Button to select image to determine if planet or not
         async function predictImage(file) {
             if (!window.model) {
@@ -173,7 +156,7 @@
             try {
                 if (file.type === 'application/pdf') {
                     // Handle text-based PDFs
-                    const extractedText = await extractTextFromPDF(file);
+                    const extractedText = await reader.extractTextFromPDF(file);
                     
                     if (!extractedText.trim()) {
                         alert('No text found in this PDF.');

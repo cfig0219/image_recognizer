@@ -34,29 +34,22 @@ export class Extractor {
     }
     
     // Extracts text from a PDF file using pdf-lib
-    async extractTextFromPdf(pdfFile) {
-        try {
-            // Load the PDF file
-            const pdfjsLib = window['pdfjs-dist/build/pdf'];
-            const pdfBytes = await file.arrayBuffer();
-            const pdfDocument = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
+    async extractTextFromPDF(file) {
+        const pdfjsLib = window['pdfjs-dist/build/pdf'];
+        const pdfBytes = await file.arrayBuffer();
+        const pdfDocument = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
         
-            let extractedText = '';
-            for (let i = 1; i <= pdfDocument.numPages; i++) {
-                const page = await pdfDocument.getPage(i);
-                const textContent = await page.getTextContent();
+        let extractedText = '';
+        for (let i = 1; i <= pdfDocument.numPages; i++) {
+            const page = await pdfDocument.getPage(i);
+            const textContent = await page.getTextContent();
         
-                // Concatenate text items
-                extractedText += textContent.items.map(item => item.str).join(' ') + '\n';
-            }
-        
-            this.imageText = extractedText;
-            return this.imageText;
-            
-        } catch (err) {
-            console.error('Error extracting text from PDF:', err);
-            throw err;
+            // Concatenate text items
+            extractedText += textContent.items.map(item => item.str).join(' ') + '\n';
         }
+        
+        this.imageText = extractedText;
+        return this.imageText;
     }
 
 }
