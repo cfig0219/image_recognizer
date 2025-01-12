@@ -38,17 +38,42 @@ export class Extractor {
         const pdfjsLib = window['pdfjs-dist/build/pdf'];
         const pdfBytes = await file.arrayBuffer();
         const pdfDocument = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
-        
+    
         let extractedText = '';
+    
         for (let i = 1; i <= pdfDocument.numPages; i++) {
             const page = await pdfDocument.getPage(i);
             const textContent = await page.getTextContent();
-        
-            // Concatenate text items
-            extractedText += textContent.items.map(item => item.str).join(' ') + '\n';
+    
+            // Group text items by their y-coordinate to separate lines
+            const lines = [];
+            let currentLineY = null;
+            let currentLine = [];
+    
+            textContent.items.forEach(item => {
+                const y = item.transform[5]; // y-coordinate of the text item
+    
+                // If this item's y-coordinate differs significantly from the current line's y, start a new line
+                if (currentLineY === null || Math.abs(currentLineY - y) > 2) {
+                    if (currentLine.length > 0) {
+                        lines.push(currentLine.join(' '));
+                    }
+                    currentLineY = y;
+                    currentLine = [];
+                }
+    
+                currentLine.push(item.str);
+            });
+    
+            // Add the last line
+            if (currentLine.length > 0) {
+                lines.push(currentLine.join(' '));
+            }
+    
+            extractedText += lines.join('\n') + '\n\n'; // Separate pages with an extra newline
         }
-        
-        this.imageText = extractedText;
+    
+        this.imageText = extractedText.trim(); // Trim trailing whitespace
         return this.imageText;
     }
 

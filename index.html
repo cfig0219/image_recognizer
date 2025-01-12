@@ -36,6 +36,22 @@
     
     <div class="container">
         <h2>3. Output of Selected Image</h2>
+        <div id="image-output" class="scrollable-text-container"></div>
+    </div>
+    
+    <style>
+        .scrollable-text-container {
+            height: 400px; /* Fixed height */
+            overflow-y: auto; /* Vertical scroll when content overflows */
+            border: 1px solid #ccc; /* Optional: Add a border for better visibility */
+            padding: 10px; /* Optional: Add padding for aesthetics */
+            background-color: #f9f9f9; /* Optional: Background color for better readability */
+        }
+    </style>
+
+    
+    <div class="container">
+        <h2>4. Total Amount Spent</h2>
         <p id="image-output"></p>
     </div>
 
@@ -163,7 +179,9 @@
                         return;
                     }
                     
-                    predictionResult.textContent = extractedText.replace(/\n/g, '<br>'); // Display extracted text
+                    // Displays PDF output
+                    predictionResult.textContent = 'Category';
+                    imageOutput.innerHTML = reader.getText().replace(/\n/g, '<br>');
         
                 } else if (file.type.startsWith('image/')) {
                     // Handle image files
