@@ -29,7 +29,7 @@ export class Extractor {
     
     // Gets the extracted text with newlines
     getText() {
-        console.log(this.imageText);
+        //console.log(this.imageText);
         return this.imageText;
     }
     
@@ -75,6 +75,26 @@ export class Extractor {
     
         this.imageText = extractedText.trim(); // Trim trailing whitespace
         return this.imageText;
+    }
+    
+    
+    // Obtains total from the extracted image text
+    getTotal() {
+        let total = "";
+    
+        // Split the text into lines
+        const lines = this.imageText.split('\n');
+    
+        // Iterate through each line
+        for (const line of lines) {
+            // Check if the line contains the word "Total"
+            if (line.includes('Total')) {
+                total = line; // Set the line as total
+                //stops at the last occurrence of total
+            }
+        }
+    
+        return total;
     }
 
 }

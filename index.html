@@ -39,6 +39,11 @@
         <div id="image-output" class="scrollable-text-container"></div>
     </div>
     
+    <div class="container">
+        <h2>4. Total Amount Spent</h2>
+        <p id="total-output"></p>
+    </div>
+    
     <style>
         .scrollable-text-container {
             height: 400px; /* Fixed height */
@@ -48,12 +53,12 @@
             background-color: #f9f9f9; /* Optional: Background color for better readability */
         }
     </style>
-
     
     <div class="container">
-        <h2>4. Total Amount Spent</h2>
-        <p id="image-output"></p>
+        <h2>5. Download output JSON File</h2>
+        <p id="json-output"></p>
     </div>
+    
 
     <script type="module"> // Script set to "module" type to allow for imports
         // Imports functions from other file classes
@@ -64,10 +69,13 @@
         
         const trainButton = document.getElementById('train-button');
         const predictButton = document.getElementById('predict-button');
+        
         // Initializes result and status paragraphs
         const predictionResult = document.getElementById('prediction-result');
         const trainingStatus = document.getElementById('training-status');
         const imageOutput = document.getElementById('image-output');
+        const totalOutput = document.getElementById('total-output');
+        const jsonOutput = document.getElementById('json-output');
         
         // function to select image file
         async function preprocessImage(file) {
@@ -173,15 +181,19 @@
                 if (file.type === 'application/pdf') {
                     // Handle text-based PDFs
                     const extractedText = await reader.extractTextFromPDF(file);
-                    
+        
                     if (!extractedText.trim()) {
                         alert('No text found in this PDF.');
                         return;
                     }
-                    
+        
                     // Displays PDF output
                     predictionResult.textContent = 'Category';
                     imageOutput.innerHTML = reader.getText().replace(/\n/g, '<br>');
+                    totalOutput.innerHTML = reader.getTotal().replace(/\n/g, '<br>');
+        
+                    // Generate and display JSON file
+                    createDownloadableJSON(reader.getText());
         
                 } else if (file.type.startsWith('image/')) {
                     // Handle image files
@@ -193,12 +205,16 @@
                     prediction.dispose();
         
                     predictionResult.textContent = predictionArray[0] > predictionArray[1] ? 'Category' : 'Not in Category';
-                    
+        
                     // Displays image output string as paragraph content
                     reader.extractImage(file).then(() => {
-                        imageOutput.innerHTML = reader.getText().replace(/\n/g, '<br>'); // Replace \n with <br> for HTML rendering
+                        imageOutput.innerHTML = reader.getText().replace(/\n/g, '<br>');
+                        totalOutput.innerHTML = reader.getTotal().replace(/\n/g, '<br>');
+        
+                        // Generate and display JSON file
+                        createDownloadableJSON(reader.getText());
                     });
-                    
+        
                 } else {
                     alert('Unsupported file type. Please upload an image or a PDF.');
                 }
@@ -206,6 +222,24 @@
                 console.error('Error processing file:', error);
                 alert('An error occurred while processing the file. Please check the file and try again.');
             }
+        }
+        
+        // Function to create a downloadable JSON file and add a download button
+        function createDownloadableJSON(textContent) {
+            const jsonData = { content: textContent }; // Wrap content in an object
+            const jsonBlob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
+            const jsonURL = URL.createObjectURL(jsonBlob);
+        
+            // Create a download button
+            const downloadButton = document.createElement('a');
+            downloadButton.href = jsonURL;
+            downloadButton.download = 'output.json';
+            downloadButton.textContent = 'Download JSON';
+            downloadButton.style.display = 'block'; // Ensure it's visible
+        
+            // Clear previous content in jsonOutput and add the button
+            jsonOutput.innerHTML = ''; // Clear existing content
+            jsonOutput.appendChild(downloadButton);
         }
 
 
