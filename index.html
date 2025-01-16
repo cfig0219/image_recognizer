@@ -224,10 +224,33 @@
             }
         }
         
+        
+        // Helper function to format text content row by row
+        function formatRowByRowContent(textContent) {
+            // Split the input text into lines
+            const rows = textContent.split("\n"); // Split by newline or other delimiter
+        
+            // Format each row as "key": "value", skipping invalid lines
+            const formattedRows = rows
+                .map((row) => {
+                    const parts = row.split(":"); // Split by colon
+                    if (parts.length >= 2) { // Ensure it has at least a key and a value
+                        const key = parts[0].trim(); // First part is the key
+                        const value = parts.slice(1).join(":").trim(); // Rest is the value
+                        return `"${key}": "${value}"`;
+                    }
+                    return null; // Skip lines that are not in "key: value" format
+                })
+                .filter(Boolean) // Remove null entries
+                .join(",\n"); // Join rows with a comma and newline
+        
+            return formattedRows; // Return the row-by-row formatted string
+        }
+        
         // Function to create a downloadable JSON file and add a download button
         function createDownloadableJSON(textContent) {
-            const jsonData = { content: textContent }; // Wrap content in an object
-            const jsonBlob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
+            const formattedContent = formatRowByRowContent(textContent); // Reformat the content
+            const jsonBlob = new Blob([formattedContent], { type: 'application/json' });
             const jsonURL = URL.createObjectURL(jsonBlob);
         
             // Create a download button
